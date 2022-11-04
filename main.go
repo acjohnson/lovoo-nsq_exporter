@@ -22,9 +22,6 @@ var (
 	nsqdURL           = flag.String("nsqd.addr", "http://localhost:4151/stats", "Address of the nsqd node.")
 	enabledCollectors = flag.String("collect", "stats.topics,stats.channels", "Comma-separated list of collectors to use.")
 	namespace         = flag.String("namespace", "nsq", "Namespace for the NSQ metrics.")
-	tlsCACert         = flag.String("tls.ca_cert", "", "CA certificate file to be used for nsqd connections.")
-	tlsCert           = flag.String("tls.cert", "", "TLS certificate file to be used for client connections to nsqd.")
-	tlsKey            = flag.String("tls.key", "", "TLS key file to be used for TLS client connections to nsqd.")
 
 	statsRegistry = map[string]func(namespace string) collector.StatsCollector{
 		"topics":   collector.TopicStats,
@@ -63,15 +60,13 @@ func main() {
 }
 
 func createNsqExecutor() (*collector.NsqExecutor, error) {
+
 	nsqdURL, err := normalizeURL(*nsqdURL)
 	if err != nil {
 		return nil, err
 	}
 
-	ex, err := collector.NewNsqExecutor(*namespace, nsqdURL, *tlsCACert, *tlsCert, *tlsKey)
-	if err != nil {
-		log.Fatal(err)
-	}
+	ex := collector.NewNsqExecutor(*namespace, nsqdURL)
 	for _, param := range strings.Split(*enabledCollectors, ",") {
 		param = strings.TrimSpace(param)
 		parts := strings.SplitN(param, ".", 2)
